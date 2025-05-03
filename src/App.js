@@ -1,14 +1,31 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Game from "./Components/Game";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
+import "./App.css";
 
 const App = () => {
   const [score, setScore] = useState(0);
+  const musicRef = useRef(null);
   const [timeLeft, setTimeLeft] = useState(30);
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
   const totalCoins = 4;
+
+  useEffect(() => {
+    if (!gameOver && !won) {
+      musicRef.current = new Audio("/music/background.wav");
+      musicRef.current.loop = true;
+      musicRef.current.volume = 0.3;
+      musicRef.current.play().catch((e) => console.log("auto play blocked", e));
+    }
+    return () => {
+      if (musicRef.current) {
+        musicRef.current.pause();
+        musicRef.current = null;
+      }
+    };
+  }, [gameOver, won]);
 
   useEffect(() => {
     if (gameOver || won) return;
@@ -39,6 +56,11 @@ const App = () => {
     setWon(false);
   };
 
+  const handleMove = (key) => {
+    const event = new KeyboardEvent("keydown", { code: key });
+    window.dispatchEvent(event);
+  };
+
   return (
     <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
       <Canvas
@@ -48,7 +70,12 @@ const App = () => {
       >
         <ambientLight intensity={0.5} />
         <directionalLight position={[15, 15, 15]} castShadow />
-        <Game score={score} setScore={setScore} gameOver={gameOver} />
+        <Game
+          score={score}
+          setScore={setScore}
+          gameOver={gameOver}
+          move={handleMove}
+        />
         <OrbitControls minDistance={5} maxDistance={20} />
       </Canvas>
       <div
@@ -66,6 +93,51 @@ const App = () => {
         Score: {score}
         Time: {timeLeft} s
       </div>
+      {!gameOver && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: "20%",
+            left: "35%",
+            display: "flex",
+            flexDirection: "column",
+            gap: "15px",
+          }}
+        >
+          <button
+            onClick={() => handleMove("ArrowUp")}
+            className="arrow-buttons"
+          >
+            ⬆️
+          </button>
+          <div style={{ display: "flex", gap: "12px" }}>
+            <button
+              onClick={() => handleMove("ArrowLeft")}
+              className="arrow-buttons"
+            >
+              ⬅️
+            </button>
+            <button
+              onClick={() => handleMove("Space")}
+              className="arrow-buttons"
+            >
+              jump
+            </button>
+            <button
+              onClick={() => handleMove("ArrowRight")}
+              className="arrow-buttons"
+            >
+              ➡️
+            </button>
+          </div>
+          <button
+            onClick={() => handleMove("ArrowDown")}
+            className="arrow-buttons"
+          >
+            ⬇️
+          </button>
+        </div>
+      )}
       {gameOver && (
         <div
           style={{

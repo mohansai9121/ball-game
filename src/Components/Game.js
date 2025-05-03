@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
 const boundary = 20;
+const coinSound = new Audio("/music/coin.wav");
 
 const Game = ({ score, setScore, gameOver }) => {
   const ballRef = useRef();
@@ -78,6 +79,9 @@ const Game = ({ score, setScore, gameOver }) => {
         const coinBox = new THREE.Box3().setFromObject(coinRef);
         if (coinBox && ballBox.intersectsBox(coinBox)) {
           setCoins((prev) => prev.filter((_, i) => i !== index));
+          coinSound.currentTime = 0;
+          coinSound.volume = 0.5;
+          coinSound.play().catch((e) => console.log("soundblocked", e));
           setScore((s) => s + 1);
         }
       }
