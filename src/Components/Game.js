@@ -2,10 +2,16 @@ import { useFrame } from "@react-three/fiber";
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
-const boundary = 20;
+const boundary = 15;
 const coinSound = new Audio("/music/coin.wav");
+const initialCoinsPosition = [
+  [5, 0.5, 0],
+  [-5, 0.5, -5],
+  [0, 0.5, 5],
+  [-7, 0.5, 7],
+];
 
-const Game = ({ score, setScore, gameOver }) => {
+const Game = ({ score, setScore, gameOver, reset }) => {
   const ballRef = useRef();
   const obstacleRefs = useRef([]);
   const coinRefs = useRef([]);
@@ -19,12 +25,36 @@ const Game = ({ score, setScore, gameOver }) => {
     [-4, 0.5, 3],
   ];
 
-  const [coins, setCoins] = useState([
-    [5, 0.5, 0],
-    [-5, 0.5, -5],
-    [0, 0.5, 5],
-    [-7, 0.5, 7],
-  ]);
+  const [coins, setCoins] = useState(initialCoinsPosition);
+
+  const generateRandomCoinPositions = (
+    count,
+    boundary,
+    avoidPositions = []
+  ) => {
+    const positions = [];
+
+    const isTooClose = (a, b, threshold = 2) => {
+      const dx = a[0] - b[0];
+      const dz = a[2] - b[2];
+      return Math.sqrt(dx * dx + dz * dz) < threshold;
+    };
+
+    while (positions.length < count) {
+      const x = Math.floor(Math.random() * (boundary * 2)) - boundary;
+      const z = Math.floor(Math.random() * (boundary * 2)) - boundary;
+      const newPos = [x, 0.5, z];
+
+      if (
+        !positions.some((p) => isTooClose(p, newPos)) &&
+        !avoidPositions.some((p) => isTooClose(p, newPos))
+      ) {
+        positions.push(newPos);
+      }
+    }
+
+    return positions;
+  };
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -52,6 +82,26 @@ const Game = ({ score, setScore, gameOver }) => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onGround]);
+
+  useEffect(() => {
+    setCoins(initialCoinsPosition);
+    if (ballRef.current) {
+      ballRef.current.position.set(0, 0.5, 0);
+    }
+    velocityRef.current = [0, 0, 0];
+    setOnGround(true);
+  }, [reset]);
+
+  useEffect(() => {
+    const newCoins = generateRandomCoinPositions(4, boundary, obstacles);
+    setCoins(newCoins);
+
+    if (ballRef.current) {
+      ballRef.current.position.set(0, 0.5, 0);
+    }
+    velocityRef.current = [0, 0, 0];
+    setOnGround(true);
+  }, [reset]);
 
   const checkCollision = (nextPosition) => {
     const ballBox = new THREE.Box3().setFromCenterAndSize(
@@ -123,6 +173,12 @@ const Game = ({ score, setScore, gameOver }) => {
         velocityRef.current = [vx * 0.99, newVy, vz * 0.99];
       }
     }
+    coinRefs.current.forEach((ref) => {
+      if (ref) {
+        ref.rotation.y += 0.05;
+        ref.rotation.x += 0.05;
+      }
+    });
   });
 
   return (
@@ -155,7 +211,11 @@ const Game = ({ score, setScore, gameOver }) => {
           castShadow
         >
           <cylinderGeometry args={[0.3, 0.3, 0.2, 16]} />
-          <meshStandardMaterial color="gold" />
+          <meshStandardMaterial
+            color="gold"
+            emissive="yellow"
+            emissiveIntensity={0.5}
+          />
         </mesh>
       ))}
 

@@ -10,13 +10,14 @@ const App = () => {
   const [timeLeft, setTimeLeft] = useState(30);
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
+  const [resetTrigger, setResetTrigger] = useState(false);
   const totalCoins = 4;
 
   useEffect(() => {
     if (!gameOver && !won) {
       musicRef.current = new Audio("/music/background.wav");
       musicRef.current.loop = true;
-      musicRef.current.volume = 0.3;
+      musicRef.current.volume = 0.5;
       musicRef.current.play().catch((e) => console.log("auto play blocked", e));
     }
     return () => {
@@ -26,6 +27,41 @@ const App = () => {
       }
     };
   }, [gameOver, won]);
+
+  useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+    const handleTouchStart = (e) => {
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+    };
+    const handleTouchEnd = (e) => {
+      const touch = e.changedTouches[0];
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+
+      if (Math.max(absDx, absDy) < 30) return;
+
+      if (absDx > absDy) {
+        if (dx > 0) handleMove("ArrowRight");
+        else handleMove("ArrowLeft");
+      } else {
+        if (dy > 0) handleMove("ArrowDown");
+        else handleMove("ArrowUp");
+      }
+    };
+    window.addEventListener("touchstart", handleTouchStart);
+    window.addEventListener("touchend", handleTouchEnd);
+
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, []);
 
   useEffect(() => {
     if (gameOver || won) return;
@@ -54,6 +90,7 @@ const App = () => {
     setTimeLeft(30);
     setGameOver(false);
     setWon(false);
+    setResetTrigger((pre) => !pre);
   };
 
   const handleMove = (key) => {
@@ -64,7 +101,7 @@ const App = () => {
   return (
     <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
       <Canvas
-        camera={{ position: [0, 5, 10], fov: 60 }}
+        camera={{ position: [0, 15, 10], fov: 60 }}
         style={{ width: "100vw", height: "100vh" }}
         shadows
       >
@@ -75,8 +112,9 @@ const App = () => {
           setScore={setScore}
           gameOver={gameOver}
           move={handleMove}
+          reset={resetTrigger}
         />
-        <OrbitControls minDistance={5} maxDistance={20} />
+        <OrbitControls minDistance={5} maxDistance={20} enableRotate={false} />
       </Canvas>
       <div
         style={{
@@ -91,6 +129,7 @@ const App = () => {
         }}
       >
         Score: {score}
+        <br />
         Time: {timeLeft} s
       </div>
       {!gameOver && (
