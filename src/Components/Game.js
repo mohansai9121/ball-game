@@ -93,7 +93,13 @@ const Game = ({ score, setScore, gameOver, reset }) => {
   }, [reset]);
 
   useEffect(() => {
-    const newCoins = generateRandomCoinPositions(4, boundary, obstacles);
+    const obstacles1 = [
+        [2, 0.5, 2],
+        [-3, 0.5, -1],
+        [1, 0.5, -4],
+        [-4, 0.5, 3],
+      ]
+    const newCoins = generateRandomCoinPositions(4, boundary, obstacles1);
     setCoins(newCoins);
 
     if (ballRef.current) {
