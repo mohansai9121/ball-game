@@ -4,9 +4,10 @@ import * as THREE from "three";
 
 const boundary = 20;
 
-const Game = () => {
+const Game = ({ score, setScore, gameOver }) => {
   const ballRef = useRef();
   const obstacleRefs = useRef([]);
+  const coinRefs = useRef([]);
   const velocityRef = useRef([0, 0, 0]);
   const [onGround, setOnGround] = useState(true);
 
@@ -16,6 +17,13 @@ const Game = () => {
     [1, 0.5, -4],
     [-4, 0.5, 3],
   ];
+
+  const [coins, setCoins] = useState([
+    [5, 0.5, 0],
+    [-5, 0.5, -5],
+    [0, 0.5, 5],
+    [-7, 0.5, 7],
+  ]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -58,8 +66,26 @@ const Game = () => {
     return false;
   };
 
+  const checkCoinCollision = (position) => {
+    const ballBox = new THREE.Box3().setFromCenterAndSize(
+      position,
+      new THREE.Vector3(1, 1, 1)
+    );
+    coins.forEach((coin, index) => {
+      const coinRef = coinRefs.current[index];
+      if (!coinRef || gameOver) return;
+      if (coinRef) {
+        const coinBox = new THREE.Box3().setFromObject(coinRef);
+        if (coinBox && ballBox.intersectsBox(coinBox)) {
+          setCoins((prev) => prev.filter((_, i) => i !== index));
+          setScore((s) => s + 1);
+        }
+      }
+    });
+  };
+
   useFrame(() => {
-    if (!ballRef.current) return;
+    if (!ballRef.current || gameOver) return;
     const [vx, vy, vz] = velocityRef.current;
     let [x, y, z] = ballRef.current.position.toArray();
 
@@ -82,6 +108,7 @@ const Game = () => {
       x = Math.max(-boundary, Math.min(boundary, newX));
       y = nextY;
       z = Math.max(-boundary, Math.min(boundary, newZ));
+      checkCoinCollision(new THREE.Vector3(x, y, z));
       ballRef.current.position.set(x, y, z);
       if (y <= 0.5) {
         y = 0.5;
@@ -115,6 +142,19 @@ const Game = () => {
           <meshStandardMaterial color="brown" />
         </mesh>
       ))}
+
+      {coins.map((pos, i) => (
+        <mesh
+          key={i}
+          ref={(el) => (coinRefs.current[i] = el)}
+          position={pos}
+          castShadow
+        >
+          <cylinderGeometry args={[0.3, 0.3, 0.2, 16]} />
+          <meshStandardMaterial color="gold" />
+        </mesh>
+      ))}
+
       <mesh position={[0, 1, -boundary - 0.5]}>
         <boxGeometry args={[2 * boundary, 2, 1]} />
         <meshStandardMaterial color="gray" />
