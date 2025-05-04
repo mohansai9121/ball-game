@@ -2,7 +2,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
-const boundary = 15;
+const boundary = 12;
 const coinSound = new Audio("/music/coin.wav");
 const initialCoinsPosition = [
   [5, 0.5, 0],
@@ -202,13 +202,13 @@ const Game = ({
       if (y <= 0.5) {
         y = 0.5;
         setOnGround(true);
-        velocityRef.current = [vx * 0.9, 0, vz * 0.9];
+        velocityRef.current = [vx * 0.96, 0, vz * 0.96];
       } else {
         setOnGround(false);
         velocityRef.current = [vx * 0.99, newVy, vz * 0.99];
       }
     }
-    camera.position.lerp(new THREE.Vector3(x + 1, y + 5, z + 4), 0.1);
+    camera.position.lerp(new THREE.Vector3(x + 2, y + 8, z + 5), 0.1);
     camera.lookAt(new THREE.Vector3(x, y, z));
     coinRefs.current.forEach((ref) => {
       if (ref) {

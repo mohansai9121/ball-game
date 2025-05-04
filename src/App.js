@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Game from "./Components/Game";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+//import { OrbitControls } from "@react-three/drei";
 import "./App.css";
 
 const App = () => {
@@ -138,7 +138,7 @@ const App = () => {
   };
 
   return (
-    <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
+    <div className="screen">
       {!showStart && (
         <Canvas
           camera={{ position: [0, 15, 10], fov: 60 }}
@@ -156,63 +156,34 @@ const App = () => {
             totalCoins={coinCount}
             totalObstacles={coinCount}
           />
-          <OrbitControls
+          {/*<OrbitControls
             minDistance={5}
             maxDistance={20}
-            enableRotate={false}
-          />
+            enableRotate={true}
+            maxPolarAngle={Math.PI / 2.1}
+            minPolarAngle={Math.PI / 4}
+            maxAzimuthAngle={Math.PI / 8}
+            minAzimuthAngle={Math.PI / 8}
+          />*/}
         </Canvas>
       )}
 
       {showStart && (
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            background: "rgba(0, 0, 0, 1)",
-            zIndex: "1",
-            padding: "30px 40px",
-            borderRadius: "10px",
-            textAlign: "center",
-            color: "white",
-            fontSize: "20px",
-          }}
-        >
+        <div className="introduction">
           <h2>🎮 Welcome to the Ball Game!</h2>
           <p>Collect all the coins before time runs out.</p>
           <p>Use arrow keys or touch controls to move.</p>
           <p>
             Press <b>Space</b> or jump button to jump.
           </p>
-          <button
-            onClick={() => setShowStart(false)}
-            style={{
-              marginTop: "20px",
-              fontSize: "20px",
-              padding: "10px 20px",
-              cursor: "pointer",
-            }}
-          >
+          <button onClick={() => setShowStart(false)} className="start-button">
             Start
           </button>
         </div>
       )}
 
       {!showStart && (
-        <div
-          style={{
-            position: "absolute",
-            top: 20,
-            left: 20,
-            padding: "10px 20px",
-            background: "rgba(0, 0, 0, 0.5)",
-            color: "white",
-            fontSize: "24px",
-            borderRadius: "8px",
-          }}
-        >
+        <div className="score-display">
           Score: {score}
           <br />
           Time: {timeLeft} s
@@ -222,37 +193,13 @@ const App = () => {
       )}
 
       {!showStart && (
-        <button
-          onClick={toggleMusic}
-          style={{
-            position: "absolute",
-            top: 20,
-            right: 20,
-            padding: "10px 16px",
-            fontSize: "16px",
-            borderRadius: "6px",
-            background: "rgba(0,0,0,0.7)",
-            color: "white",
-            border: "none",
-            cursor: "pointer",
-            zIndex: 10,
-          }}
-        >
+        <button onClick={toggleMusic} className="mute-music">
           {isMusicPlaying ? "🔈 Mute" : "🔇 Play Music"}
         </button>
       )}
 
       {!showStart && !gameOver && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: "20%",
-            left: "35%",
-            display: "flex",
-            flexDirection: "column",
-            gap: "15px",
-          }}
-        >
+        <div className="control-buttons">
           <button
             onClick={() => handleMove("ArrowUp")}
             className="arrow-buttons"
@@ -268,7 +215,7 @@ const App = () => {
             </button>
             <button
               onClick={() => handleMove("Space")}
-              className="arrow-buttons"
+              className="space-button"
             >
               jump
             </button>
@@ -289,25 +236,13 @@ const App = () => {
       )}
 
       {!showStart && gameOver && (
-        <div
-          style={{
-            position: "absolute",
-            top: "40%",
-            left: "45%",
-            transform: "translate(-50%, -50%)",
-            background: "rgba(0, 0, 0, 0.5)",
-            padding: "30px 40px",
-            fontSize: "32px",
-            color: "white",
-            textAlign: "center",
-            borderRadius: "10px",
-          }}
-        >
+        <div className="result-display">
           {won ? "🎉 You win" : "Time is Up"}
           <br />
           <button onClick={resetGame} style={{ marginTop: "10px" }}>
             Restart
           </button>
+          <br />
           {won && (
             <button onClick={nextLevel} style={{ marginTop: "10px" }}>
               Next Level
