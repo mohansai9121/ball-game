@@ -1,4 +1,4 @@
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
@@ -11,21 +11,43 @@ const initialCoinsPosition = [
   [-7, 0.5, 7],
 ];
 
-const Game = ({ score, setScore, gameOver, reset }) => {
+const Game = ({
+  score,
+  setScore,
+  gameOver,
+  reset,
+  totalCoins = 4,
+  totalObstacles = 4,
+}) => {
   const ballRef = useRef();
   const obstacleRefs = useRef([]);
+  const { camera } = useThree();
   const coinRefs = useRef([]);
   const velocityRef = useRef([0, 0, 0]);
   const [onGround, setOnGround] = useState(true);
-
-  const obstacles = [
+  const [obstacles, setObstacles] = useState([
     [2, 0.5, 2],
     [-3, 0.5, -1],
     [1, 0.5, -4],
     [-4, 0.5, 3],
-  ];
+  ]);
 
   const [coins, setCoins] = useState(initialCoinsPosition);
+
+  const generateRandomObstaclesPositions = (count, boundary) => {
+    const positions = [];
+    while (positions.length < count) {
+      const x = Math.floor(Math.random() * boundary * 2) - boundary;
+      const z = Math.floor(Math.random() * boundary * 2) - boundary;
+      const newPos = [x, 0.5, z];
+
+      const tooClose = positions.some(
+        ([px, , pz]) => Math.hypot(px - x, pz - z) < 2
+      );
+      if (!tooClose) positions.push(newPos);
+    }
+    return positions;
+  };
 
   const generateRandomCoinPositions = (
     count,
@@ -84,30 +106,37 @@ const Game = ({ score, setScore, gameOver, reset }) => {
   }, [onGround]);
 
   useEffect(() => {
-    setCoins(initialCoinsPosition);
-    if (ballRef.current) {
-      ballRef.current.position.set(0, 0.5, 0);
-    }
-    velocityRef.current = [0, 0, 0];
-    setOnGround(true);
-  }, [reset]);
+    const newObstacles = generateRandomObstaclesPositions(
+      totalObstacles,
+      boundary
+    );
+    const newCoins = generateRandomCoinPositions(totalCoins, boundary);
 
-  useEffect(() => {
-    const obstacles1 = [
-        [2, 0.5, 2],
-        [-3, 0.5, -1],
-        [1, 0.5, -4],
-        [-4, 0.5, 3],
-      ]
-    const newCoins = generateRandomCoinPositions(4, boundary, obstacles1);
+    setObstacles(newObstacles);
     setCoins(newCoins);
 
+    const findSafeSpawn = () => {
+      while (true) {
+        const x = Math.floor(Math.random() * 2 * boundary) - boundary;
+        const z = Math.floor(Math.random() * 2 * boundary) - boundary;
+        const candidate = [x, 0.5, z];
+
+        const tooClose = newObstacles.some(([ox, , oz]) => {
+          const dx = ox - x;
+          const dz = oz - z;
+          return Math.sqrt(dx * dx + dz * dz) < 2;
+        });
+        if (!tooClose) return candidate;
+      }
+    };
+
+    const spawnPos = findSafeSpawn();
     if (ballRef.current) {
-      ballRef.current.position.set(0, 0.5, 0);
+      ballRef.current.position.set(...spawnPos);
     }
     velocityRef.current = [0, 0, 0];
     setOnGround(true);
-  }, [reset]);
+  }, [reset, totalCoins, totalObstacles]);
 
   const checkCollision = (nextPosition) => {
     const ballBox = new THREE.Box3().setFromCenterAndSize(
@@ -179,6 +208,8 @@ const Game = ({ score, setScore, gameOver, reset }) => {
         velocityRef.current = [vx * 0.99, newVy, vz * 0.99];
       }
     }
+    camera.position.lerp(new THREE.Vector3(x + 1, y + 5, z + 4), 0.1);
+    camera.lookAt(new THREE.Vector3(x, y, z));
     coinRefs.current.forEach((ref) => {
       if (ref) {
         ref.rotation.y += 0.05;
